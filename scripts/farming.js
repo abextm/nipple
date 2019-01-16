@@ -3,7 +3,6 @@ var patchImplPath = "C:/Users/Abex/Documents/runelite/runelite-client/src/main/j
 var genImpl = {
 	BELLADONNA: { objID: 7572, tab: "SPECIAL" },
 	MUSHROOM: { objID: 8337, tab: "SPECIAL" },
-	CELASTRUS: { objID: 34629, tab: "SPECIAL" },
 	HESPORI: { objID: 34630, tab: "SPECIAL" },
 	ALLOTMENT: { objID: 33694 },
 	HERB: { objID: 33979 },
@@ -19,6 +18,7 @@ var genImpl = {
 	CACTUS: { objID: 33761, tab: "SPECIAL", name: "Cactus" },
 	SEAWEED: { objID: 30500, tab: "SPECIAL", name: "Seaweed" },
 	CALQUAT: { objID: 7807, tab: "FRUIT_TREE", name: "Calquat" },
+	CELASTRUS: { objID: 34629, tab: "FRUIT_TREE", name: "Celastrus" },
 	GRAPES: grapes,
 };
 // Notes:
