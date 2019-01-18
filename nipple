@@ -1,5 +1,11 @@
 #!/bin/bash
 set -e
+if [ "$1" = "download" ]; then
+	LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/abextm/osrs-cache/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+	echo "Downloading $LATEST_VERSION"
+	curl -L "https://github.com/abextm/osrs-cache/releases/download/$LATEST_VERSION/dump-$LATEST_VERSION.tar.gz" | tar xz
+	exit
+fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 NEWDIR="$DIR/scripts"
 FI="$1"
