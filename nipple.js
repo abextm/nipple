@@ -60,6 +60,7 @@ lazyGlobalDir("items", () => jsonDir("item_defs"));
 lazyGlobalDir("models", () => jsonDir("models"));
 lazyGlobalDir("enums", () => jsonDir("enums"));
 lazyGlobalDir("structs", () => jsonDir("structs"));
+lazyGlobalDir("_", () => require("lodash"));
 
 function formatInterface() {
 	var out = {};
@@ -86,23 +87,42 @@ function formatInterface() {
 	});
 	return out;
 }
+global.addInterfaceFormatter = i => {
+	i[util.inspect.custom] = formatInterface;
+	return i;
+};
 lazyGlobalDir("interfaces", () => {
 	return fs.readdirSync("interface_defs", { withFileTypes: true })
 		.filter(di => di.isDirectory())
 		.map(di => jsonDir("interface_defs/" + di.name)
-			.map(i => {
-				i[util.inspect.custom] = formatInterface;
-				return i;
-			})
+			.map(addInterfaceFormatter)
 		).sort((a, b) => a[0].id - b[0].id);
 });
 lazyGlobalDir("widgets", () => [].concat.apply([], interfaces));
+
+global.removeKeys = function (array) {
+	if (!Array.isArray(array)) {
+		array = [...arguments];
+	}
+	return function (i) {
+		if (typeof i != "object") return i;
+		var o = {};
+		Object.keys(i).forEach(k => {
+			if (array.indexOf(k) == -1) {
+				o[k] = i[k];
+			}
+		});
+		return o;
+	};
+};
+
 
 global.filterKeys = function (array) {
 	if (!Array.isArray(array)) {
 		array = [...arguments];
 	}
 	return function (i) {
+		if (typeof i != "object") return i;
 		var o = {};
 		array.forEach(k => {
 			if (i[k] !== undefined) {
@@ -114,26 +134,32 @@ global.filterKeys = function (array) {
 		}
 		return o;
 	};
-}
-global.varyingKeys = function (v, i, o) {
+};
+
+global.varyingKeys = (array) => {
+	if (!Array.isArray(array)) {
+		array = [...arguments];
+	}
 	var filterFn;
 	return (v, i, o) => {
-		if (o.length <= 1) {
-			return {};
-		}
 		if (!filterFn) {
-			var keys = {};
-			for (var i = 0; i < o.length; i++) {
-				var n = (i + 1) % o.length;
-				Object.keys(o[i])
-					.filter(k => !Object.is(o[i][k], o[n][k]))
-					.forEach(k => keys[k] = true);
+			o = o.filter(i => i);
+			if (o.length <= 1) {
+				filterFn = i => i ? {} : i;
+			} else {
+				var keys = {};
+				for (var i = 0; i < o.length; i++) {
+					var n = (i + 1) % o.length;
+					Object.keys(o[i])
+						.filter(k => !_.isEqual(o[i][k], o[n][k]))
+						.forEach(k => keys[k] = true);
+				}
+				filterFn = filterKeys(array.concat(Object.keys(keys)));
 			}
-			filterFn = filterKeys(Object.keys(keys));
 		}
 		return filterFn(v, i, o);
 	}
-}
+};
 
 global.write = (filename, data) => fs.writeFileSync(filename, data);
 global.writeJSON = (filename, data) => write(filename, JSON.stringify(data, null, "  "));
