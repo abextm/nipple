@@ -58,18 +58,86 @@ lazyGlobalDir("objs", () => jsonDir("object_defs"));
 lazyGlobalDir("npcs", () => jsonDir("npc_defs"));
 lazyGlobalDir("items", () => jsonDir("item_defs"));
 lazyGlobalDir("models", () => jsonDir("models"));
-lazyGlobalDir("enums", () => jsonDir("enums"));
+lazyGlobalDir("raw_enums", () => jsonDir("enums"));
 lazyGlobalDir("structs", () => jsonDir("structs"));
 lazyGlobalDir("_", () => require("lodash"));
+
+var namedTypeFormatter = n => v => {
+	var obj = global[n][v];
+	if (!obj) return "" + v;
+	return constify(obj.name) + "_" + v;
+}
+var scriptVarTypeFormatters = {
+	'INTEGER': v => "" + v,
+	'BOOLEAN': v => v == 0 ? "false" : (v == 1 ? true : "" + v),
+	'COLOUR': v => v.toString(16),
+	'COMPONENT': v => {
+		var w = wid(v);
+		return w[0] + ":" + w[1];
+	},
+	'COORDGRID': v => {
+		if (v == -1) return "null";
+		var x = (v >> 7) & 0x3FFF;
+		var y = v & 0x3FFF;
+		var plane = v >> 28;
+		return `${plane}_${x}_${y}`;
+	},
+	"OBJ": namedTypeFormatter("items"),
+	"NAMEDOBJ": namedTypeFormatter("items"),
+	"LOC": namedTypeFormatter("objs"),
+	"NPC": namedTypeFormatter("npcs"),
+};
+
+global.KEY_TYPE = Symbol("KEY_TYPE");
+global.VALUE_TYPE = Symbol("VALUE_TYPE");
+
+var enumFormatter = function () {
+	var out = {};
+	var fmtKey = scriptVarTypeFormatters[this[KEY_TYPE]] || (v => "" + v);
+	var fmtValue = scriptVarTypeFormatters[this[VALUE_TYPE]] || (v => "" + v);
+	out[this[KEY_TYPE]] = this[VALUE_TYPE];
+	Object.keys(this).forEach(k => {
+		if (k === util.inspect.custom) return;
+		out[fmtKey(k)] = fmtValue(this[k]);
+	});
+	return out;
+};
+
+global.addEnumFormatter = enu => {
+	enu[util.inspect.custom] = enumFormatter;
+	return enu;
+};
+
+lazyGlobalDir("enums", () => {
+	var oout = {};
+	raw_enums.forEach(e => {
+		var out = {};
+		var array = e.intVals;
+		var fallback = e.defaultInt;
+		if (e.valType == "STRING") {
+			array = e.stringVals;
+			fallback = e.defaultString;
+		}
+		e.keys.forEach((k, i) => {
+			out[k] = array[i] || fallback;
+		});
+		out[KEY_TYPE] = e.keyType;
+		out[VALUE_TYPE] = e.valType;
+		addEnumFormatter(out);
+		oout[e.id] = out;
+	});
+	return oout;
+});
 
 function formatInterface() {
 	var out = {};
 	Object.keys(this).forEach(k => {
 		if (k === util.inspect.custom) return;
 		switch (k) {
+			case "parentId":
 			case "id":
-				var w = wid(this.id);
-				out.id = w[0] + ":" + w[1];
+				var w = wid(this[k]);
+				out[k] = w[0] + ":" + w[1];
 				break;
 			default:
 				if (k.endsWith("Listener") && Array.isArray(this[k])) {
