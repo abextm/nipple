@@ -58,7 +58,7 @@ lazyGlobalDir("objs", () => jsonDir("object_defs"));
 lazyGlobalDir("npcs", () => jsonDir("npc_defs"));
 lazyGlobalDir("items", () => jsonDir("item_defs"));
 lazyGlobalDir("models", () => jsonDir("models"));
-lazyGlobalDir("raw_enums", () => jsonDir("enums"));
+lazyGlobalDir("rawEnums", () => jsonDir("enums"));
 lazyGlobalDir("structs", () => jsonDir("structs"));
 lazyGlobalDir("_", () => require("lodash"));
 
@@ -110,7 +110,7 @@ global.addEnumFormatter = enu => {
 
 lazyGlobalDir("enums", () => {
 	var oout = {};
-	raw_enums.forEach(e => {
+	rawEnums.forEach(e => {
 		var out = {};
 		var array = e.intVals;
 		var fallback = e.defaultInt;

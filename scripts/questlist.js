@@ -8,5 +8,5 @@ var categories = {
 Object.keys(categories).map(k=>{
 	var eid = categories[k];
 	return "//"+k+"\n"+
-	enums[eid].intVals.map(sid=>constify(structs[sid].params[610])+"("+sid+", \""+structs[sid].params[610]+"\"),").join("\n")
+	rawEnums[eid].intVals.map(sid=>constify(structs[sid].params[610])+"("+sid+", \""+structs[sid].params[610]+"\"),").join("\n")
 }).join("\n\n");
